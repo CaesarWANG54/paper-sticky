@@ -77,7 +77,7 @@ function rowEl(b: Block): HTMLElement {
   row.className = `blk ${b.type}${b.done ? ' done' : ''}`;
   const marker =
     b.type === 'check'
-      ? `<button class="mk cb" contenteditable="false" tabindex="-1" aria-label="Toggle done">${ICON.check}</button>`
+      ? `<button class="mk cb" contenteditable="false" tabindex="-1" aria-label="切换完成状态">${ICON.check}</button>`
       : '<span class="mk" contenteditable="false"></span>';
   row.innerHTML = `${marker}<span class="tx">${runsToHTML(parseInline(b.text))}</span>`;
   return row;
@@ -143,6 +143,7 @@ export function createEditor(
   onChange: (blocks: Block[]) => void,
 ): Editor {
   let blocks: Block[] = initial.length ? initial : [{ ...EMPTY }];
+  let composing = false;
 
   root.classList.add('editor');
   root.contentEditable = 'true';
@@ -152,6 +153,7 @@ export function createEditor(
 
   function renderAll(): void {
     root.replaceChildren(...blocks.map(rowEl));
+    root.dataset.empty = String(blocks.length === 1 && !blocks[0].text);
   }
 
   function renderBlock(i: number): void {
@@ -159,6 +161,7 @@ export function createEditor(
   }
 
   function commit(): void {
+    root.dataset.empty = String(blocks.length === 1 && !blocks[0].text);
     onChange(blocks);
   }
 
@@ -174,6 +177,16 @@ export function createEditor(
   function caret(): Caret | null {
     const sel = getSelection();
     if (!sel?.focusNode || !root.contains(sel.focusNode)) return null;
+    if (sel.focusNode === root) {
+      const i = Math.max(0, Math.min(sel.focusOffset, blocks.length - 1));
+      return {
+        block: i,
+        offset:
+          sel.focusOffset >= root.children.length && root.children.length > 0
+            ? plainLength(blocks[i])
+            : 0,
+      };
+    }
     const i = blockIndexOf(sel.focusNode);
     if (i < 0) return null;
     const tx = root.children[i].querySelector('.tx');
@@ -272,6 +285,12 @@ export function createEditor(
 
   // Enter splits the current block through the model; Shift+Enter does the same.
   root.addEventListener('beforeinput', (ev) => {
+    if (composing || ev.isComposing) return;
+    if (ev.inputType === 'insertText' && ev.data?.includes('\n')) {
+      ev.preventDefault();
+      insertPlainText(ev.data);
+      return;
+    }
     if (ev.inputType !== 'insertParagraph' && ev.inputType !== 'insertLineBreak') return;
     ev.preventDefault();
     const sel = getSelection();
@@ -284,6 +303,7 @@ export function createEditor(
   });
 
   root.addEventListener('keydown', (ev) => {
+    if (composing || ev.isComposing || ev.keyCode === 229) return;
     if (ev.ctrlKey && !ev.altKey) {
       const key = ev.key.toLowerCase();
       const cmd: FormatCommand | null =
@@ -330,7 +350,8 @@ export function createEditor(
   });
 
   // Everything the browser did on its own: re-read, repair if needed, apply list shortcuts.
-  root.addEventListener('input', () => {
+  function handleInput(): void {
+    if (composing) return;
     const c = caret();
     const derived = fromDOM();
     blocks = derived.blocks;
@@ -346,12 +367,25 @@ export function createEditor(
       }
     }
     commit();
+  }
+  root.addEventListener('input', handleInput);
+  root.addEventListener('compositionstart', () => {
+    composing = true;
+    root.dataset.empty = 'false';
+  });
+  root.addEventListener('compositionend', () => {
+    composing = false;
+    handleInput();
   });
 
   // Paste stays plain text. One line is inserted natively; several become one block per line.
   root.addEventListener('paste', (ev) => {
     ev.preventDefault();
-    const text = (ev.clipboardData?.getData('text/plain') ?? '').replace(/\r\n?/g, '\n');
+    insertPlainText(ev.clipboardData?.getData('text/plain') ?? '');
+  });
+
+  function insertPlainText(input: string): void {
+    const text = input.replace(/\r\n?/g, '\n');
     if (!text) return;
     const lines = text.split('\n');
     if (lines.length === 1) {
@@ -378,7 +412,7 @@ export function createEditor(
     const next = blocks.slice();
     next.splice(c.block, 1, ...merged);
     apply(next, c.block + merged.length - 1, runsLength(parseInline(last.text)));
-  });
+  }
 
   root.addEventListener('drop', (ev) => ev.preventDefault());
 

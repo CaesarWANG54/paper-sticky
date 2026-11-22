@@ -45,7 +45,7 @@ describe('previewLines', () => {
   });
 
   it('firstLine falls back to Empty note', () => {
-    expect(firstLine('')).toBe('Empty note');
+    expect(firstLine('')).toBe('空白便签');
     expect(firstLine('\n- [ ] eggs')).toBe('☐ eggs');
   });
 });

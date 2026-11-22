@@ -17,14 +17,14 @@ export function esc(s: string): string {
 
 export function fmtAgo(ts: number, now = Date.now()): string {
   const s = Math.max(0, (now - ts) / 1000);
-  if (s < 45) return 'just now';
+  if (s < 45) return '刚刚';
   const m = s / 60;
-  if (m < 60) return `${Math.round(m)} min ago`;
+  if (m < 60) return `${Math.round(m)} 分钟前`;
   const h = m / 60;
-  if (h < 24) return `${Math.round(h)} h ago`;
+  if (h < 24) return `${Math.round(h)} 小时前`;
   const d = h / 24;
-  if (d < 2) return 'yesterday';
-  if (d < 30) return `${Math.round(d)} days ago`;
+  if (d < 2) return '昨天';
+  if (d < 30) return `${Math.round(d)} 天前`;
   const date = new Date(ts);
   const sameYear = date.getFullYear() === new Date(now).getFullYear();
   return date.toLocaleDateString(undefined, {

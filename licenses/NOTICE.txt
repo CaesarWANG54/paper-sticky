@@ -1,0 +1,7 @@
+纸间便签 0.1.0
+
+Based on Cute Sticky, Copyright (c) 2026 Srinjoy Das, MIT License.
+Paper appearance inspired by Stickato, Copyright (c) 2026 curisama, MIT License.
+Xiaolai font v3.126 by LXGW, distributed unmodified under SIL OFL 1.1.
+
+Full license texts are included in this folder.

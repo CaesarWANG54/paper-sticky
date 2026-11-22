@@ -38,8 +38,13 @@ mod win32 {
     #[link(name = "user32")]
     extern "system" {
         fn GetWindowLongPtrW(hwnd: Hwnd, index: i32) -> isize;
+        fn GetAsyncKeyState(key: i32) -> i16;
         fn SetWindowLongPtrW(hwnd: Hwnd, index: i32, value: isize) -> isize;
         fn SetWindowPos(hwnd: Hwnd, after: Hwnd, x: i32, y: i32, cx: i32, cy: i32, flags: u32) -> i32;
+    }
+
+    pub fn left_mouse_down() -> bool {
+        unsafe { GetAsyncKeyState(1) < 0 }
     }
 
     pub fn make_popup(window: &tauri::WebviewWindow) {
@@ -72,6 +77,17 @@ fn make_popup(window: &tauri::WebviewWindow) {
     win32::make_popup(window);
     #[cfg(not(windows))]
     let _ = window;
+}
+
+pub fn left_mouse_down() -> bool {
+    #[cfg(windows)]
+    {
+        win32::left_mouse_down()
+    }
+    #[cfg(not(windows))]
+    {
+        false
+    }
 }
 
 pub const TAB: &str = "tab";
@@ -146,7 +162,7 @@ fn settings_tab_rect(app: &AppHandle) -> (Rect, bool) {
 pub fn create_tab(app: &AppHandle) -> tauri::Result<()> {
     let (r, hidden) = settings_tab_rect(app);
     WebviewWindowBuilder::new(app, TAB, WebviewUrl::App("tab.html".into()))
-        .title("Cute Sticky")
+        .title("纸间便签")
         .decorations(false)
         .transparent(true)
         .shadow(false)
@@ -206,7 +222,7 @@ pub fn tab_drag(app: &AppHandle, top: f64, done: bool) {
 
 pub fn create_pile(app: &AppHandle) -> tauri::Result<()> {
     WebviewWindowBuilder::new(app, PILE, WebviewUrl::App("pile.html".into()))
-        .title("Cute Sticky")
+        .title("纸间便签")
         .decorations(false)
         .transparent(true)
         .shadow(false)
@@ -321,15 +337,15 @@ pub fn open_note_window(app: &AppHandle, note: &Note) -> tauri::Result<Option<Re
     let r = note_window_rect(&content);
     let m = 2.0 * NOTE_MARGIN;
     WebviewWindowBuilder::new(app, &label, WebviewUrl::App("note.html".into()))
-        .title("Cute Sticky")
+        .title("纸间便签")
         .decorations(false)
         .transparent(true)
         .shadow(false)
         .always_on_top(note.pinned)
         .skip_taskbar(true)
         .resizable(true)
-        .min_inner_size(200.0 + m, 150.0 + m)
-        .max_inner_size(520.0 + m, 600.0 + m)
+        .min_inner_size(260.0 + m, 220.0 + m)
+        .max_inner_size(900.0 + m, 1000.0 + m)
         .position(r.x, r.y)
         .inner_size(r.w, r.h)
         .focused(true)

@@ -1,11 +1,11 @@
 /* Tokens, font, resets and the controls every page shares. */
 
 @font-face {
-  font-family: 'Nunito';
+  font-family: 'Xiaolai';
   font-style: normal;
-  font-weight: 200 1000;
+  font-weight: 400;
   font-display: swap;
-  src: url('./fonts/nunito-variable.woff2') format('woff2');
+  src: url('./fonts/Xiaolai-Regular.ttf') format('truetype');
 }
 
 :root {
@@ -13,7 +13,7 @@
   --ink-2: #6e6880;
   --ink-3: #9a94a8;
   --paper: #fbf8f6;
-  --accent: #7b5bcf;
+  --accent: #667651;
   --accent-soft: rgba(123, 91, 207, 0.14);
   --danger: #e2607f;
   --butter: #ffe9a8;
@@ -22,7 +22,7 @@
   --sky: #cde6fa;
   --lilac: #e3d7f7;
   --rose: #fbd5e3;
-  --app: 'Nunito', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --app: 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
   --spring: cubic-bezier(0.34, 1.35, 0.64, 1);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
@@ -111,7 +111,7 @@ button {
   display: none;
 }
 .ic.trash.armed::after {
-  content: 'Delete?';
+  content: '删除？';
 }
 
 @media (prefers-reduced-motion: reduce) {

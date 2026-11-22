@@ -23,3 +23,14 @@ desktop.ini
 # raw desktop captures used to produce the README crops
 docs/screenshots/raw-*.png
 dev/dist
+
+.qa/
+release/
+audit-internal.json
+
+# upstream design notes and previews retained only in the local checkout
+docs/superpowers/
+docs/mockups/
+docs/screenshots/*.png
+!docs/screenshots/paper-note.png
+!docs/screenshots/paper-appearance.png

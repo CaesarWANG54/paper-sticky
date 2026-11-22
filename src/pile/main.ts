@@ -7,7 +7,7 @@
 import '../shared/theme.css';
 import './pile.css';
 
-import { colorHex } from '../shared/colors';
+import { colorHex, inkFor } from '../shared/colors';
 import { $$, esc, fmtAgo, installPageDefaults } from '../shared/dom';
 import { ICON } from '../shared/icons';
 import { ipc, onPileFold, onPileOpen } from '../shared/ipc';
@@ -35,12 +35,12 @@ let armTimer: ReturnType<typeof setTimeout> | undefined;
 function cardHTML(note: Note, i: number, layout: PileLayout): string {
   const lines = previewLines(parse(note.content), 3);
   return `<div class="fc${note.open ? ' is-open' : ''}" role="button" tabindex="0" data-id="${note.id}"
-      style="--t:${cardTop(i, layout.step)}px;--z:${i + 1};--rot:${tilt(i).toFixed(2)}deg;background-color:${colorHex(note.color)}">
-    <div class="fc-top"><span class="fc-l1${lines[0] ? '' : ' mute'}">${esc(lines[0] ?? 'Empty note')}</span><span class="openmark">open</span></div>
+      style="--t:${cardTop(i, layout.step)}px;--z:${i + 1};--rot:${tilt(i).toFixed(2)}deg;color:${inkFor(note.color)};--card-ink:${inkFor(note.color)};color:${inkFor(note.color)};--card-ink:${inkFor(note.color)};background-color:${colorHex(note.color)}">
+    <div class="fc-top"><span class="fc-l1${lines[0] ? '' : ' mute'}">${esc(lines[0] ?? '空白便签')}</span><span class="openmark">已展开</span></div>
     <div class="fc-ln">${esc(lines[1] ?? '')}</div>
     <div class="fc-ln">${esc(lines[2] ?? '')}</div>
     <div class="fc-foot"><span class="ago">${fmtAgo(note.updatedAt)}</span></div>
-    <button class="ic trash del" title="Delete" aria-label="Delete note">${ICON.trash}</button>
+    <button class="ic trash del" title="删除便签" aria-label="删除便签">${ICON.trash}</button>
   </div>`;
 }
 
@@ -56,9 +56,11 @@ function updateCard(el: HTMLElement, note: Note, i: number, layout: PileLayout):
   el.style.setProperty('--z', String(i + 1));
   el.style.setProperty('--rot', `${tilt(i).toFixed(2)}deg`);
   el.style.backgroundColor = colorHex(note.color);
+  el.style.setProperty('--card-ink', inkFor(note.color));
+  el.style.setProperty('--card-ink', inkFor(note.color));
   el.classList.toggle('is-open', note.open);
   const l1 = el.querySelector('.fc-l1')!;
-  l1.textContent = lines[0] ?? 'Empty note';
+  l1.textContent = lines[0] ?? '空白便签';
   l1.classList.toggle('mute', !lines[0]);
   const ln = el.querySelectorAll('.fc-ln');
   ln[0].textContent = lines[1] ?? '';
@@ -73,7 +75,7 @@ function render({ data, layout }: PileOpen): void {
   let ghost = pile.querySelector<HTMLElement>('.ghost');
   if (!ghost) {
     ghost = fromHTML(
-      `<button class="ghost" aria-label="New note">${ICON.plus}<span>New note</span></button>`,
+      `<button class="ghost" aria-label="新便签">${ICON.plus}<span>新便签</span></button>`,
     );
     pile.appendChild(ghost);
   }

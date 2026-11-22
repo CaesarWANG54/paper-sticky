@@ -1,6 +1,7 @@
 /** Data shapes shared with the Rust side. Field names match the JSON (camelCase). */
 
-export type Color = 'butter' | 'peach' | 'mint' | 'sky' | 'lilac' | 'rose';
+export type Color = 'butter' | 'peach' | 'mint' | 'sky' | 'lilac' | 'rose' | 'ivory' | `#${string}`;
+export type Pattern = 'blank' | 'ruled' | 'grid' | 'cross' | 'dots';
 
 export type Shape = 'square' | 'circle' | 'cloud' | 'heart' | 'bubble';
 
@@ -16,6 +17,7 @@ export interface Note {
   id: string;
   color: Color;
   shape: Shape;
+  pattern: Pattern;
   content: string;
   pinned: boolean;
   open: boolean;

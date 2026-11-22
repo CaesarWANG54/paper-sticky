@@ -2,22 +2,27 @@
 
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import type { Color, Data, Note, PileOpen, Shape } from './types';
+import type { Color, Data, Note, PileOpen, Shape, Pattern } from './types';
 
 export const ipc = {
   listNotes: () => invoke<Data>('list_notes'),
   getNote: (id: string) => invoke<Note | null>('get_note', { id }),
   createNote: () => invoke<Note>('create_note'),
-  updateNote: (id: string, patch: { content?: string; color?: Color; shape?: Shape }) =>
+  updateNote: (
+    id: string,
+    patch: { content?: string; color?: Color; shape?: Shape; pattern?: Pattern },
+  ) =>
     invoke<void>('update_note', {
       id,
       content: patch.content ?? null,
       color: patch.color ?? null,
       shape: patch.shape ?? null,
+      pattern: patch.pattern ?? null,
     }),
   deleteNote: (id: string) => invoke<void>('delete_note', { id }),
   openNote: (id: string) => invoke<void>('open_note', { id }),
   closeNote: (id: string) => invoke<void>('close_note', { id }),
+  finishDrag: (id: string) => invoke<boolean>('finish_drag', { id }),
   setNotePinned: (id: string, pinned: boolean) => invoke<void>('set_note_pinned', { id, pinned }),
   hover: (source: 'tab' | 'pile', inside: boolean) => invoke<void>('hover', { source, inside }),
   pileHidden: () => invoke<void>('pile_hidden'),

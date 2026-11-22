@@ -1,8 +1,13 @@
 name: Release
 
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version tag matching the app version, e.g. v0.1.0'
+        required: true
+        default: 'v0.1.0'
+        type: string
 
 permissions:
   contents: write
@@ -31,7 +36,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Cute Sticky ${{ github.ref_name }}'
-          releaseBody: 'Download the installer below. Windows 11 only.'
+          tagName: ${{ inputs.tag }}
+          releaseName: '纸间便签 ${{ inputs.tag }}'
+          releaseBody: 'Windows x64 安装版。功能与使用方法见仓库 README。'
           releaseDraft: true

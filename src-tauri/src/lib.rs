@@ -118,8 +118,15 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
         .setup(|app| {
-            let dir = app.path().app_data_dir()?;
-            let store = Store::load(dir.join("notes.json"));
+            let dir = std::env::var_os("PAPER_STICKY_DATA_DIR")
+                .map(std::path::PathBuf::from)
+                .unwrap_or(app.path().app_data_dir()?);
+            let first_launch = !dir.join("notes.json").exists();
+            let mut store = Store::load(dir.join("notes.json"));
+            if first_launch && store.notes().is_empty() {
+                store.create_note();
+                store.save()?;
+            }
             app.manage(AppState::new(store));
             let handle = app.handle().clone();
             sync_autostart(&handle);
@@ -176,6 +183,7 @@ pub fn run() {
             notes::delete_note,
             notes::open_note,
             notes::close_note,
+            notes::finish_drag,
             notes::set_note_pinned,
             notes::hover,
             notes::pile_hidden,

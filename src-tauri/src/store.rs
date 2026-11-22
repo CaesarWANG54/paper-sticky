@@ -3,13 +3,15 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub const COLORS: [&str; 6] = ["butter", "peach", "mint", "sky", "lilac", "rose"];
+pub const COLORS: [&str; 7] = ["butter", "peach", "mint", "sky", "lilac", "rose", "ivory"];
+pub const PATTERNS: [&str; 5] = ["blank", "ruled", "grid", "cross", "dots"];
 pub const SHAPES: [&str; 5] = ["square", "circle", "cloud", "heart", "bubble"];
-pub const DEFAULT_NOTE_W: f64 = 270.0;
-pub const DEFAULT_NOTE_H: f64 = 230.0;
+pub const DEFAULT_NOTE_W: f64 = 340.0;
+pub const DEFAULT_NOTE_H: f64 = 330.0;
 
 /// Content rectangle of a note window in logical pixels (shadow margin excluded).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -28,6 +30,8 @@ pub struct Note {
     /// One of `SHAPES`; files written before shapes existed load as "square".
     #[serde(default = "default_shape")]
     pub shape: String,
+    #[serde(default = "default_pattern")]
+    pub pattern: String,
     pub content: String,
     pub pinned: bool,
     pub open: bool,
@@ -52,7 +56,7 @@ impl Default for Settings {
         Settings {
             tab_y: 0.36,
             tab_hidden: false,
-            autostart: true,
+            autostart: false,
         }
     }
 }
@@ -90,7 +94,10 @@ impl Store {
                 Err(err) => {
                     log::error!("{} is not valid; moving it aside: {err}", path.display());
                     quarantine(&path);
-                    Data::default()
+                    fs::read_to_string(path.with_extension("json.bak"))
+                        .ok()
+                        .and_then(|s| serde_json::from_str(&s).ok())
+                        .unwrap_or_default()
                 }
             },
             Err(err) if err.kind() == io::ErrorKind::NotFound => Data::default(),
@@ -138,6 +145,7 @@ impl Store {
             id: new_id(),
             color: next_color(&self.data.notes).to_string(),
             shape: "square".to_string(),
+            pattern: "blank".to_string(),
             content: String::new(),
             pinned: true,
             open: true,
@@ -171,7 +179,13 @@ impl Store {
         }
         let json = serde_json::to_string_pretty(&self.data).map_err(io::Error::other)?;
         let tmp = self.path.with_extension("json.tmp");
-        fs::write(&tmp, json)?;
+        let mut file = fs::File::create(&tmp)?;
+        file.write_all(json.as_bytes())?;
+        file.sync_all()?;
+        drop(file);
+        if self.path.exists() {
+            fs::copy(&self.path, self.path.with_extension("json.bak"))?;
+        }
         fs::rename(&tmp, &self.path)?;
         self.dirty = false;
         Ok(())
@@ -199,6 +213,15 @@ pub fn next_color(notes: &[Note]) -> &'static str {
 
 fn default_shape() -> String {
     "square".to_string()
+}
+
+fn default_pattern() -> String {
+    "blank".to_string()
+}
+
+pub fn valid_color(color: &str) -> bool {
+    COLORS.contains(&color)
+        || (color.len() == 7 && color.starts_with('#') && color[1..].bytes().all(|b| b.is_ascii_hexdigit()))
 }
 
 fn quarantine(path: &Path) {
@@ -286,10 +309,11 @@ mod tests {
     #[test]
     fn new_notes_cycle_colours() {
         let mut store = Store::load(temp_path());
-        let colours: Vec<String> = (0..7).map(|_| store.create_note().color).collect();
+        let colours: Vec<String> = (0..8).map(|_| store.create_note().color).collect();
         assert_eq!(colours[0], "butter");
         assert_eq!(colours[5], "rose");
-        assert_eq!(colours[6], "butter");
+        assert_eq!(colours[6], "ivory");
+        assert_eq!(colours[7], "butter");
     }
 
     #[test]
@@ -325,7 +349,7 @@ mod tests {
         fs::write(&path, r#"{"version":1,"settings":{"tabY":0.5},"notes":[]}"#).unwrap();
         let store = Store::load(path);
         assert_eq!(store.data().settings.tab_y, 0.5);
-        assert!(store.data().settings.autostart);
+        assert!(!store.data().settings.autostart);
         assert!(!store.data().settings.tab_hidden);
     }
 
@@ -350,5 +374,50 @@ mod tests {
         assert!(json.contains("\"tabY\""));
         assert!(json.contains("\"createdAt\""));
         assert!(!json.contains("created_at"));
+    }
+
+    #[test]
+    fn chinese_and_each_paper_pattern_survive_restart() {
+        let path = temp_path();
+        let mut store = Store::load(path.clone());
+        for pattern in PATTERNS {
+            let note = store.create_note();
+            let n = store.note_mut(&note.id).unwrap();
+            n.content = "下午三点，记得带伞。\n- [ ] 回复邮件".into();
+            n.color = "#405a32".into();
+            n.pattern = pattern.into();
+            n.window = Some(WindowRect {
+                x: 150.0,
+                y: 210.0,
+                w: 340.0,
+                h: 330.0,
+            });
+        }
+        store.save().unwrap();
+        let again = Store::load(path);
+        assert_eq!(again.data(), store.data());
+    }
+
+    #[test]
+    fn corrupt_primary_recovers_last_backup() {
+        let path = temp_path();
+        let mut store = Store::load(path.clone());
+        let note = store.create_note();
+        store.note_mut(&note.id).unwrap().content = "上一份内容".into();
+        store.save().unwrap();
+        store.note_mut(&note.id).unwrap().content = "新的内容".into();
+        store.save().unwrap();
+        fs::write(&path, "broken").unwrap();
+        let restored = Store::load(path);
+        assert_eq!(restored.note(&note.id).unwrap().content, "上一份内容");
+    }
+
+    #[test]
+    fn accepts_only_presets_and_six_digit_custom_colors() {
+        assert!(valid_color("ivory"));
+        assert!(valid_color("#ab12EF"));
+        for bad in ["red", "#123", "#12345z", "url(x)", "#000000;display:none"] {
+            assert!(!valid_color(bad));
+        }
     }
 }

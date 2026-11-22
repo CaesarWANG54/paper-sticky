@@ -20,24 +20,18 @@ fn current_settings(app: &AppHandle) -> (bool, bool) {
 
 pub fn build(app: &AppHandle) -> tauri::Result<()> {
     let (hidden, autostart_on) = current_settings(app);
-    let new_item = MenuItem::with_id(app, "new", "New note", true, None::<&str>)?;
+    let new_item = MenuItem::with_id(app, "new", "新便签", true, None::<&str>)?;
     let tab_item = MenuItem::with_id(app, "tab", tab_label(hidden), true, None::<&str>)?;
-    let autostart_item = CheckMenuItem::with_id(
-        app,
-        "autostart",
-        "Start with Windows",
-        true,
-        autostart_on,
-        None::<&str>,
-    )?;
-    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+    let autostart_item =
+        CheckMenuItem::with_id(app, "autostart", "开机启动", true, autostart_on, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let menu = Menu::with_items(app, &[&new_item, &tab_item, &autostart_item, &separator, &quit])?;
 
     let icon = app.default_window_icon().cloned().expect("bundle icon missing");
     TrayIconBuilder::with_id("main")
         .icon(icon)
-        .tooltip("Cute Sticky")
+        .tooltip("纸间便签")
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| match event.id().as_ref() {
@@ -82,9 +76,9 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
 
 fn tab_label(hidden: bool) -> &'static str {
     if hidden {
-        "Show tab"
+        "显示侧边收纳"
     } else {
-        "Hide tab"
+        "隐藏侧边收纳"
     }
 }
 

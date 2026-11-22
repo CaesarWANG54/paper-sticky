@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Cute Sticky",
-  "version": "0.2.0",
-  "identifier": "com.srinjoy.cutesticky",
+  "productName": "纸间便签",
+  "version": "0.1.0",
+  "identifier": "com.caesar.papersticky",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -11,7 +11,9 @@
   },
   "app": {
     "windows": [],
-    "security": { "csp": null }
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'"
+    }
   },
   "bundle": {
     "active": true,
@@ -23,6 +25,17 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "windows": { "nsis": { "installMode": "currentUser" } }
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["SimpChinese"],
+        "displayLanguageSelector": false
+      }
+    },
+    "shortDescription": "小赖手写桌面便签",
+    "resources": {
+      "../licenses/": "licenses/",
+      "../使用说明.txt": "使用说明.txt"
+    }
   }
 }

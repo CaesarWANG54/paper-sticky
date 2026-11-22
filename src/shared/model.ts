@@ -62,7 +62,7 @@ export function previewLines(blocks: Block[], count: number): string[] {
 }
 
 export function firstLine(text: string): string {
-  return previewLines(parse(text), 1)[0] ?? 'Empty note';
+  return previewLines(parse(text), 1)[0] ?? '空白便签';
 }
 
 /** A markdown-style shortcut typed at the start of a block, or null when none applies. */

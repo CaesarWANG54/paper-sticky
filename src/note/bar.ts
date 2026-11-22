@@ -15,20 +15,20 @@ const LISTS: { type: ListType; icon: string; title: string }[] = [
   {
     type: 'bullet',
     icon: ICON.bullets,
-    title: 'Bullet list (or type "- " at the start of a line)',
+    title: '项目符号',
   },
   {
     type: 'check',
     icon: ICON.checklist,
-    title: 'Checklist (or type "[] " at the start of a line)',
+    title: '待办勾选',
   },
 ];
 
 const STYLES: { cmd: FormatCommand; label: string; cls: string; title: string }[] = [
-  { cmd: 'bold', label: 'B', cls: 'b', title: 'Bold (Ctrl+B)' },
-  { cmd: 'italic', label: 'I', cls: 'i', title: 'Italic (Ctrl+I)' },
-  { cmd: 'underline', label: 'U', cls: 'u', title: 'Underline (Ctrl+U)' },
-  { cmd: 'strikeThrough', label: 'S', cls: 's', title: 'Strikethrough (Ctrl+Shift+S)' },
+  { cmd: 'bold', label: 'B', cls: 'b', title: '加粗 · Ctrl+B' },
+  { cmd: 'italic', label: 'I', cls: 'i', title: '斜体 · Ctrl+I' },
+  { cmd: 'underline', label: 'U', cls: 'u', title: '下划线 · Ctrl+U' },
+  { cmd: 'strikeThrough', label: 'S', cls: 's', title: '删除线 · Ctrl+Shift+S' },
 ];
 
 export function createBar(host: HTMLElement, editorRoot: HTMLElement, editor: Editor): HTMLElement {
